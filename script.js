@@ -4,112 +4,133 @@ document.addEventListener('DOMContentLoaded', function() {
     initTheme();
     // Inicializar grupos de tarefas
     initTaskGroups();
-    // Inicializar partículas
-    particlesJS('particles-js', {
-        particles: {
-            number: {
-                value: 80,
-                density: {
-                    enable: true,
-                    value_area: 800
-                }
-            },
-            color: {
-                value: '#3b82f6'
-            },
-            shape: {
-                type: 'circle',
-                stroke: {
-                    width: 0,
-                    color: '#000000'
-                },
-                polygon: {
-                    nb_sides: 5
-                }
-            },
-            opacity: {
-                value: 0.5,
-                random: true,
-                anim: {
-                    enable: true,
-                    speed: 1,
-                    opacity_min: 0.1,
-                    sync: false
-                }
-            },
-            size: {
-                value: 3,
-                random: true,
-                anim: {
-                    enable: true,
-                    speed: 2,
-                    size_min: 0.1,
-                    sync: false
-                }
-            },
-            line_linked: {
-                enable: true,
-                distance: 150,
-                color: '#3b82f6',
-                opacity: 0.4,
-                width: 1
-            },
-            move: {
-                enable: true,
-                speed: 2,
-                direction: 'none',
-                random: true,
-                straight: false,
-                out_mode: 'out',
-                bounce: false,
-                attract: {
-                    enable: false,
-                    rotateX: 600,
-                    rotateY: 1200
-                }
-            }
-        },
-        interactivity: {
-            detect_on: 'canvas',
-            events: {
-                onhover: {
-                    enable: true,
-                    mode: 'grab'
-                },
-                onclick: {
-                    enable: true,
-                    mode: 'push'
-                },
-                resize: true
-            },
-            modes: {
-                grab: {
-                    distance: 140,
-                    line_linked: {
-                        opacity: 1
+    // Inicializar partículas com ajuste para desempenho em dispositivos móveis
+    initParticles();
+
+    // Inicialização de partículas com detecção de dispositivo
+    function initParticles() {
+        // Verificar se é um dispositivo móvel ou tablet (tela pequena)
+        const isMobile = window.innerWidth <= 768;
+        
+        // Configuração ajustada para diferentes dispositivos
+        particlesJS('particles-js', {
+            particles: {
+                number: {
+                    value: isMobile ? 30 : 80,
+                    density: {
+                        enable: true,
+                        value_area: isMobile ? 600 : 800
                     }
                 },
-                bubble: {
-                    distance: 400,
-                    size: 40,
-                    duration: 2,
-                    opacity: 8,
-                    speed: 3
+                color: {
+                    value: '#3b82f6'
                 },
-                repulse: {
-                    distance: 200,
-                    duration: 0.4
+                shape: {
+                    type: 'circle',
+                    stroke: {
+                        width: 0,
+                        color: '#000000'
+                    },
+                    polygon: {
+                        nb_sides: 5
+                    }
                 },
-                push: {
-                    particles_nb: 4
+                opacity: {
+                    value: 0.5,
+                    random: true,
+                    anim: {
+                        enable: true,
+                        speed: isMobile ? 0.5 : 1,
+                        opacity_min: 0.1,
+                        sync: false
+                    }
                 },
-                remove: {
-                    particles_nb: 2
+                size: {
+                    value: isMobile ? 2 : 3,
+                    random: true,
+                    anim: {
+                        enable: true,
+                        speed: isMobile ? 1 : 2,
+                        size_min: 0.1,
+                        sync: false
+                    }
+                },
+                line_linked: {
+                    enable: true,
+                    distance: isMobile ? 100 : 150,
+                    color: '#3b82f6',
+                    opacity: 0.4,
+                    width: 1
+                },
+                move: {
+                    enable: true,
+                    speed: isMobile ? 1 : 2,
+                    direction: 'none',
+                    random: true,
+                    straight: false,
+                    out_mode: 'out',
+                    bounce: false,
+                    attract: {
+                        enable: false,
+                        rotateX: 600,
+                        rotateY: 1200
+                    }
                 }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: {
+                    onhover: {
+                        enable: !isMobile, // Desativar em dispositivos móveis para melhor desempenho
+                        mode: 'grab'
+                    },
+                    onclick: {
+                        enable: true,
+                        mode: 'push'
+                    },
+                    resize: true
+                },
+                modes: {
+                    grab: {
+                        distance: 140,
+                        line_linked: {
+                            opacity: 1
+                        }
+                    },
+                    bubble: {
+                        distance: 400,
+                        size: 40,
+                        duration: 2,
+                        opacity: 8,
+                        speed: 3
+                    },
+                    repulse: {
+                        distance: 200,
+                        duration: 0.4
+                    },
+                    push: {
+                        particles_nb: isMobile ? 2 : 4
+                    },
+                    remove: {
+                        particles_nb: 2
+                    }
+                }
+            },
+            retina_detect: true
+        });
+        
+        // Redimensionamento da janela
+        window.addEventListener('resize', function() {
+            const newIsMobile = window.innerWidth <= 768;
+            // Recarregar partículas se a condição de dispositivo móvel mudou
+            if (newIsMobile !== isMobile) {
+                setTimeout(function() {
+                    pJSDom[0].pJS.fn.vendors.destroypJS();
+                    initParticles();
+                }, 300);
             }
-        },
-        retina_detect: true
-    });
+        });
+    }
 
     // Funcionalidade de grupos de tarefas
     function initTaskGroups() {
@@ -135,9 +156,40 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let currentEditingGroup = null;
         let currentDeletingGroup = null;
+        let isTouch = false;
+        
+        // Detectar suporte a toque
+        window.addEventListener('touchstart', function onFirstTouch() {
+            isTouch = true;
+            document.body.classList.add('touch-device');
+            window.removeEventListener('touchstart', onFirstTouch);
+        }, false);
+        
+        // Função para melhorar a experiência em dispositivos touch
+        function enhanceTouchExperience() {
+            // Aumentar a área de toque para checkboxes
+            document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+                checkbox.style.minWidth = '24px';
+                checkbox.style.minHeight = '24px';
+            });
+            
+            // Aumentar a área de toque para botões
+            document.querySelectorAll('button').forEach(button => {
+                if (button.offsetWidth < 44 || button.offsetHeight < 44) {
+                    button.style.minWidth = 'auto';
+                    button.style.padding = '0.5rem';
+                }
+            });
+        }
         
         // Carregar grupos do localStorage
         loadGroups();
+        
+        // Melhorar experiência de toque se necessário
+        if ('ontouchstart' in window) {
+            enhanceTouchExperience();
+            window.addEventListener('resize', enhanceTouchExperience);
+        }
         
         // Configurar botão de importação
         importBtn.addEventListener('click', function() {
