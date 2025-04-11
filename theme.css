@@ -1,0 +1,82 @@
+:root {
+
+    --bg-color: #121212;
+    --card-bg: #1e1e1e;
+    --text-primary: #ffffff;
+    --text-secondary: #b3b3b3;
+    --accent-color: #3b82f6;
+    --accent-hover: #2563eb;
+    --danger-color: #ef4444;
+    --danger-hover: #dc2626;
+    --border-color: #333333;
+    --checkbox-bg: #2d2d2d;
+    --completed-text: #6b7280;
+    --input-bg: #2d2d2d;
+    --toggle-bg: #1e1e1e;
+    --toggle-border: #333333;
+    --toggle-icon: #ffffff;
+    
+
+    --theme-transition-duration: 0.3s;
+    --theme-transition-timing: ease;
+}
+
+:root.light-theme {
+    --bg-color: #f5f7fa;
+    --card-bg: #ffffff;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --accent-color: #3b82f6;
+    --accent-hover: #2563eb;
+    --danger-color: #ef4444;
+    --danger-hover: #dc2626;
+    --border-color: #e5e7eb;
+    --checkbox-bg: #f3f4f6;
+    --completed-text: #9ca3af;
+    --input-bg: #f9fafb;
+    --toggle-bg: #ffffff;
+    --toggle-border: #e5e7eb;
+    --toggle-icon: #1f2937;
+    --group-header-bg: #f0f2f5;
+    --modal-bg: rgba(240, 242, 245, 0.8);
+    --modal-content-bg: #ffffff;
+}
+
+body, .container, .task-item, .task-input input, .task-input button,
+.header h1, .header p, .task-text, .delete-btn, .theme-toggle {
+    transition: all var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+body, h1, p, button, input, .task-text, .header, .container {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.theme-toggle {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background-color: var(--toggle-bg);
+    border: 1px solid var(--toggle-border);
+    border-radius: 50%;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 20;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.theme-toggle:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.theme-toggle i {
+    color: var(--toggle-icon);
+    font-size: 1.2rem;
+}
