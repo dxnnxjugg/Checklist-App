@@ -28,6 +28,9 @@
             <p class="text-gray-500 mt-1">Organize suas tarefas em grupos</p>
         </div>
         
+        <div class="import-container">
+            <button id="importBtn" class="import-btn"><i class="fas fa-file-import"></i> Importar Grupo</button>
+        </div>
 
         <div class="group-controls">
             <div class="task-input">
@@ -43,6 +46,7 @@
                 <div class="group-header">
                     <h2 class="group-title">Tarefas Principais</h2>
                     <div class="group-actions">
+                        <button class="export-group-btn"><i class="fas fa-file-export"></i></button>
                         <button class="edit-group-btn"><i class="fas fa-edit"></i></button>
                         <button class="delete-group-btn"><i class="fas fa-trash"></i></button>
                     </div>
@@ -56,12 +60,13 @@
                 </ul>
             </div>
         </div>
+        <footer class="footer">
+            <p>&copy; Akaso 2025</p>
+        </footer>
     </div>
-
-
     <div class="modal" id="editGroupModal">
         <div class="modal-content">
-            <span class="close-modal">&times;</span>
+            <span class="close-modal edit-close-modal">&times;</span>
             <h2>Editar Grupo</h2>
             <div class="task-input">
                 <input type="text" id="editGroupInput" placeholder="Nome do grupo">
@@ -70,6 +75,34 @@
         </div>
     </div>
 
+    <div class="modal" id="deleteGroupModal">
+        <div class="modal-content">
+            <span class="close-modal delete-close-modal">&times;</span>
+            <h2>Excluir Grupo</h2>
+            <p>Tem certeza que deseja excluir este grupo e todas as suas tarefas?</p>
+            <div class="modal-actions">
+                <button id="cancelDeleteBtn" class="cancel-btn">Cancelar</button>
+                <button id="confirmDeleteBtn" class="confirm-btn danger-btn">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="importModal">
+        <div class="modal-content">
+            <span class="close-modal import-close-modal">&times;</span>
+            <h2>Importar Grupo</h2>
+            <p id="importMessage">Selecione um arquivo JSON para importar um grupo de tarefas.</p>
+            <div class="import-file-container">
+                <input type="file" id="importFileInput" accept=".json" class="file-input">
+                <label for="importFileInput" class="file-label">Escolher arquivo</label>
+                <span id="selectedFileName" class="file-name">Nenhum arquivo selecionado</span>
+            </div>
+            <div class="modal-actions">
+                <button id="cancelImportBtn" class="cancel-btn">Cancelar</button>
+                <button id="confirmImportBtn" class="confirm-btn">Importar</button>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <script src="script.js"></script>

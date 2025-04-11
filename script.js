@@ -119,12 +119,88 @@ document.addEventListener('DOMContentLoaded', function() {
         const editGroupModal = document.getElementById('editGroupModal');
         const editGroupInput = document.getElementById('editGroupInput');
         const saveGroupBtn = document.getElementById('saveGroupBtn');
-        const closeModal = document.querySelector('.close-modal');
+        const editCloseModal = document.querySelector('.edit-close-modal');
+        const deleteCloseModal = document.querySelector('.delete-close-modal');
+        const importBtn = document.getElementById('importBtn');
+        const importModal = document.getElementById('importModal');
+        const importCloseModal = document.querySelector('.import-close-modal');
+        const importFileInput = document.getElementById('importFileInput');
+        const selectedFileName = document.getElementById('selectedFileName');
+        const cancelImportBtn = document.getElementById('cancelImportBtn');
+        const confirmImportBtn = document.getElementById('confirmImportBtn');
+        const importMessage = document.getElementById('importMessage');
+        const deleteGroupModal = document.getElementById('deleteGroupModal');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
         
         let currentEditingGroup = null;
+        let currentDeletingGroup = null;
         
         // Carregar grupos do localStorage
         loadGroups();
+        
+        // Configurar botão de importação
+        importBtn.addEventListener('click', function() {
+            // Resetar o estado do modal de importação
+            importFileInput.value = '';
+            selectedFileName.textContent = 'Nenhum arquivo selecionado';
+            importMessage.textContent = 'Selecione um arquivo JSON para importar um grupo de tarefas.';
+            importMessage.style.color = '';
+            confirmImportBtn.disabled = true;
+            
+            // Exibir o modal
+            importModal.classList.add('active');
+        });
+        
+        // Atualizar nome do arquivo selecionado
+        importFileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                selectedFileName.textContent = file.name;
+                confirmImportBtn.disabled = false;
+            } else {
+                selectedFileName.textContent = 'Nenhum arquivo selecionado';
+                confirmImportBtn.disabled = true;
+            }
+        });
+        
+        // Fechar modal de importação
+        importCloseModal.addEventListener('click', function() {
+            importModal.classList.remove('active');
+        });
+        
+        // Cancelar importação
+        cancelImportBtn.addEventListener('click', function() {
+            importModal.classList.remove('active');
+        });
+        
+        // Confirmar importação
+        confirmImportBtn.addEventListener('click', function() {
+            if (importFileInput.files.length > 0) {
+                const file = importFileInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        const jsonData = JSON.parse(e.target.result);
+                        processImport(jsonData);
+                    } catch (error) {
+                        importMessage.textContent = 'Erro ao importar: Formato de arquivo inválido.';
+                        importMessage.style.color = 'var(--danger-color)';
+                        console.error('Erro na importação:', error);
+                    }
+                };
+                
+                reader.readAsText(file);
+            }
+        });
+        
+        // Fechar modal de importação ao clicar fora
+        window.addEventListener('click', function(e) {
+            if (e.target === importModal) {
+                importModal.classList.remove('active');
+            }
+        });
         
         // Adicionar novo grupo
         addGroupBtn.addEventListener('click', addGroup);
@@ -136,9 +212,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Fechar modal
-        closeModal.addEventListener('click', function() {
+        // Fechar modais
+        editCloseModal.addEventListener('click', function() {
             editGroupModal.classList.remove('active');
+        });
+        
+        deleteCloseModal.addEventListener('click', function() {
+            deleteGroupModal.classList.remove('active');
+            currentDeletingGroup = null;
         });
         
         // Salvar edição do grupo
@@ -168,10 +249,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // Excluir grupo
             if (target.closest('.delete-group-btn')) {
                 const group = target.closest('.task-group');
-                if (confirm('Tem certeza que deseja excluir este grupo e todas as suas tarefas?')) {
-                    group.remove();
-                    saveGroups();
-                }
+                currentDeletingGroup = group;
+                deleteGroupModal.classList.add('active');
+            }
+            
+            // Exportar grupo
+            if (target.closest('.export-group-btn')) {
+                const group = target.closest('.task-group');
+                exportGroup(group);
             }
             
             // Adicionar tarefa
@@ -203,6 +288,32 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
+        // Configurar botões do modal de exclusão
+        cancelDeleteBtn.addEventListener('click', function() {
+            deleteGroupModal.classList.remove('active');
+            currentDeletingGroup = null;
+        });
+        
+        confirmDeleteBtn.addEventListener('click', function() {
+            if (currentDeletingGroup) {
+                currentDeletingGroup.remove();
+                saveGroups();
+                deleteGroupModal.classList.remove('active');
+                currentDeletingGroup = null;
+            }
+        });
+        
+        // Fechar os modais ao clicar fora deles
+        window.addEventListener('click', function(e) {
+            if (e.target === editGroupModal) {
+                editGroupModal.classList.remove('active');
+            }
+            if (e.target === deleteGroupModal) {
+                deleteGroupModal.classList.remove('active');
+                currentDeletingGroup = null;
+            }
+        });
+        
         function addGroup() {
             const groupName = groupInput.value.trim();
             
@@ -222,6 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="group-header">
                     <h2 class="group-title">${name}</h2>
                     <div class="group-actions">
+                        <button class="export-group-btn"><i class="fas fa-file-export"></i></button>
                         <button class="edit-group-btn"><i class="fas fa-edit"></i></button>
                         <button class="delete-group-btn"><i class="fas fa-trash"></i></button>
                     </div>
@@ -323,6 +435,150 @@ document.addEventListener('DOMContentLoaded', function() {
         
         function generateId() {
             return 'group_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        function exportGroup(group) {
+            const groupName = group.querySelector('.group-title').textContent;
+            const groupId = group.dataset.groupId;
+            const tasks = [];
+            
+            // Obter todas as tarefas do grupo
+            group.querySelectorAll('.task-item').forEach(task => {
+                const isCompleted = task.querySelector('.task-checkbox').checked;
+                const taskText = task.querySelector('.task-text').textContent;
+                tasks.push({
+                    text: taskText,
+                    completed: isCompleted
+                });
+            });
+            
+            // Criar objeto JSON para exportação
+            const exportData = {
+                id: groupId,
+                name: groupName,
+                tasks: tasks
+            };
+            
+            // Converter para string JSON formatada
+            const jsonString = JSON.stringify(exportData, null, 2);
+            
+            // Criar arquivo para download
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            // Criar link de download e acionar clique
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${groupName.replace(/\s+/g, '_')}.json`;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Limpar
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        }
+        
+        function importGroup(groupData) {
+            // Verificar se o grupo já existe pelo ID
+            const existingGroup = document.querySelector(`.task-group[data-group-id="${groupData.id}"]`);
+            if (existingGroup) {
+                if (!confirm(`Um grupo com o nome "${groupData.name}" já existe. Deseja substituí-lo?`)) {
+                    return;
+                }
+                existingGroup.remove();
+            }
+            
+            // Criar o novo grupo
+            const groupElement = createGroup(groupData.name, groupData.id);
+            const taskList = groupElement.querySelector('.task-list');
+            
+            // Adicionar tarefas ao grupo
+            if (groupData.tasks && Array.isArray(groupData.tasks)) {
+                groupData.tasks.forEach(task => {
+                    createTaskItem(taskList, task.text, task.completed);
+                });
+            }
+            
+            // Salvar grupos atualizados
+            saveGroups();
+            
+            // Feedback
+            alert(`Grupo "${groupData.name}" importado com sucesso!`);
+        }
+
+        function processImport(groupData) {
+            // Verificar se os dados são válidos
+            if (!groupData || !groupData.name || !groupData.id || !Array.isArray(groupData.tasks)) {
+                importMessage.textContent = 'Erro ao importar: Estrutura de dados inválida.';
+                importMessage.style.color = 'var(--danger-color)';
+                return;
+            }
+            
+            // Verificar se o grupo já existe pelo ID
+            const existingGroup = document.querySelector(`.task-group[data-group-id="${groupData.id}"]`);
+            if (existingGroup) {
+                importMessage.textContent = `Um grupo com o nome "${groupData.name}" já existe. Deseja substituí-lo?`;
+                importMessage.style.color = 'var(--accent-color)';
+                
+                // Configurar o botão de confirmação para substituir o grupo
+                const originalText = confirmImportBtn.textContent;
+                confirmImportBtn.textContent = 'Substituir';
+                
+                // Armazenar o manipulador original para removê-lo depois
+                const originalHandler = confirmImportBtn.onclick;
+                
+                // Definir o novo manipulador
+                confirmImportBtn.onclick = function() {
+                    // Remover o grupo existente
+                    existingGroup.remove();
+                    
+                    // Criar o novo grupo
+                    createGroupFromData(groupData);
+                    
+                    // Restaurar o botão e fechar o modal
+                    confirmImportBtn.textContent = originalText;
+                    confirmImportBtn.onclick = originalHandler;
+                    importModal.classList.remove('active');
+                };
+                
+                // Configurar o botão cancelar para restaurar o estado original
+                cancelImportBtn.onclick = function() {
+                    confirmImportBtn.textContent = originalText;
+                    confirmImportBtn.onclick = originalHandler;
+                    importModal.classList.remove('active');
+                };
+                
+                // Também resetar se o modal for fechado
+                importCloseModal.onclick = function() {
+                    confirmImportBtn.textContent = originalText;
+                    confirmImportBtn.onclick = originalHandler;
+                    importModal.classList.remove('active');
+                };
+                
+                return;
+            }
+            
+            // Se não houver conflito, criar o grupo diretamente
+            createGroupFromData(groupData);
+            importModal.classList.remove('active');
+        }
+        
+        function createGroupFromData(groupData) {
+            // Criar o novo grupo
+            const groupElement = createGroup(groupData.name, groupData.id);
+            const taskList = groupElement.querySelector('.task-list');
+            
+            // Adicionar tarefas ao grupo
+            if (groupData.tasks && Array.isArray(groupData.tasks)) {
+                groupData.tasks.forEach(task => {
+                    createTaskItem(taskList, task.text, task.completed);
+                });
+            }
+            
+            // Salvar grupos atualizados
+            saveGroups();
         }
     }
 });
